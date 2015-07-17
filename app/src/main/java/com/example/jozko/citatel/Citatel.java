@@ -3,10 +3,7 @@ package com.example.jozko.citatel;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -29,39 +26,36 @@ public class Citatel extends Activity {
     ListView list;
     TextView name;
     TextView description;
-    Button Btngetdata;
-    ArrayList<HashMap<String, String>> oslist = new ArrayList<HashMap<String, String>>();
+    Button btnGetData;
+    ArrayList<HashMap<String, String>> bookList = new ArrayList<HashMap<String, String>>();
 
     //URL to get JSON Array
     private static String url = "http://citatel.herokuapp.com/books.json";
 
     //JSON Node Names
-    private static final String TAG_OS = "android";
     private static final String TAG_NAME = "name";
     private static final String TAG_DESCRIPTION = "description";
 
-    JSONArray android = null;
+    JSONArray books = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_citatel);
-        oslist = new ArrayList<HashMap<String, String>>();
+        bookList = new ArrayList<HashMap<String, String>>();
 
-        Btngetdata = (Button)findViewById(R.id.get_books);
-        Btngetdata.setOnClickListener(new View.OnClickListener() {
-
+        btnGetData = (Button)findViewById(R.id.get_books);
+        btnGetData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 new JSONParse().execute();
-
             }
         });
 
     }
 
-    private class JSONParse extends AsyncTask<String, String, JSONObject> {
+    private class JSONParse extends AsyncTask<String, String, JSONArray> {
         private ProgressDialog pDialog;
         @Override
         protected void onPreExecute() {
@@ -77,41 +71,43 @@ public class Citatel extends Activity {
         }
 
         @Override
-        protected JSONObject doInBackground(String... args) {
+        protected JSONArray doInBackground(String... args) {
 
             JSONParser jParser = new JSONParser();
 
             // Getting JSON from URL
-            JSONObject json = jParser.getJSONFromUrl(url);
+            JSONArray json = jParser.getJSONFromUrl(url);
             return json;
         }
+
         @Override
-        protected void onPostExecute(JSONObject json) {
+        protected void onPostExecute(JSONArray json) {
             pDialog.dismiss();
             try {
                 // Getting JSON Array from URL
-                android = json.getJSONArray(TAG_OS);
-                for(int i = 0; i < android.length(); i++){
-                    JSONObject c = android.getJSONObject(i);
+                books = json;
+                bookList.clear();
+                for(int i = 0; i < books.length(); i++){
+                    JSONObject c = books.getJSONObject(i);
 
                     // Storing  JSON item in a Variable
                     String name = c.getString(TAG_NAME);
-                    String desription = c.getString(TAG_DESCRIPTION);
+                    String description = c.getString(TAG_DESCRIPTION);
 
                     // Adding value HashMap key => value
 
                     HashMap<String, String> map = new HashMap<String, String>();
 
                     map.put(TAG_NAME, name);
-                    map.put(TAG_DESCRIPTION, desription);
+                    map.put(TAG_DESCRIPTION, description);
 
-                    oslist.add(map);
+                    bookList.add(map);
                     list=(ListView)findViewById(R.id.list);
 
-                    ListAdapter adapter = new SimpleAdapter(Citatel.this, oslist,
-                            R.layout.list_v,
+                    ListAdapter adapter = new SimpleAdapter(Citatel.this, bookList,
+                            R.layout.book_detail,
                             new String[] { TAG_NAME, TAG_DESCRIPTION }, new int[] {
-                           R.id.name, R.id.description});
+                            R.id.name, R.id.description});
 
                     list.setAdapter(adapter);
                     list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -119,8 +115,7 @@ public class Citatel extends Activity {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view,
                                                 int position, long id) {
-                            Toast.makeText(Citatel.this, "You Clicked at " + oslist.get(+position).get("name"), Toast.LENGTH_SHORT).show();
-
+                            Toast.makeText(Citatel.this, "You Clicked at " + bookList.get(+position).get("name"), Toast.LENGTH_SHORT).show();
                         }
                     });
 
